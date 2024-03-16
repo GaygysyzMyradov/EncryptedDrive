@@ -1,6 +1,10 @@
 # Encrypted Drive
 Encrypted Drive is a robust web application developed with Django, designed to serve as a secure file management system with advanced encryption features. Built using Python Django and utilizing the Fernet encryption library, it provides seamless file upload and download capabilities within a user-friendly environment. Users can trust their data remains confidential and protected with AES-128 encryption.
 
+## NOTE
+At this cureent moment, for some technical reasons, I am unable to upload the project and its source code to GitHub. If you wish to test or use the EncryptedDrive, please follow the link below to access it. I will also push and commit it to GitHub repo in the near future. Thank You! 
+
+https://drive.google.com/file/d/1TJzMfZ9KM4npWd-grNX0wd1Ovm0FiQFZ/view?usp=share_link
 
 ## Key Features
 - User Authentication: Ensure user privacy and data integrity with secure log-in and log-out functionalities.
