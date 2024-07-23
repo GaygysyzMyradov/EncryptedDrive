@@ -1,0 +1,213 @@
+{% extends 'base.html' %} 
+{% load crispy_forms_filters %} 
+{% block extrahead %}
+    
+<style>
+	/* Style the upload area */
+	.upload-area {
+		border: 2px dashed #ccc;
+		border-radius: 5px;
+		padding: 20px;
+		text-align: center;
+		margin-bottom: 20px;
+		cursor: pointer;
+	}
+
+	.file-input {
+		margin-bottom: 10px;
+	}
+
+	.dropzone-message {
+		display: block;
+		font-size: 16px;
+		color: #555;
+	}
+
+	.browse {
+		color: #007bff;
+		text-decoration: underline;
+	}
+
+	.fa-cloud-upload-alt {
+		font-size: 48px;
+		color: #ccc;
+		margin-bottom: 10px;
+	}
+</style>
+    
+{% endblock extrahead %} 
+{% block content %}
+    
+<div class="container">
+	<div class="col-md-12">
+		<div class="row mt-5" id="pheading">
+			<a style="text-decoration: none; color: black" href="{% url 'home' %}" id="back"
+				><i class="bi bi-arrow-left-short"></i>Back > {{ folder.name }}
+			</a>
+		</div>
+	</div>
+</div>
+    
+<div class="container">
+	<div class="row mb-3">
+		<div class="col-md-12 d-flex align-items-center">
+			<div class="dropdown">
+				<button
+					class="btn btn-outline-primary dropdown-toggle"
+					type="button"
+					id="sortingDropdown"
+					data-bs-toggle="dropdown"
+					aria-expanded="false"
+				>
+					Sort by
+				</button>
+				<ul class="dropdown-menu" aria-labelledby="sortingDropdown">
+					<li><a class="dropdown-item" href="?sort=latest">Latest</a></li>
+					<li><a class="dropdown-item" href="?sort=name">Name</a></li>
+				</ul>
+			</div>
+            
+			<button
+				type="button"
+				class="btn btn-primary"
+				style="margin-left: 10px"
+				data-bs-toggle="modal"
+				data-bs-target="#uploadFileModal"
+			>
+				<i class="bi bi-cloud-upload"></i> Upload File
+			</button>
+            
+		</div>
+	</div>
+
+	<form method="GET" action="{% url 'user_folder_detail' folder.slug %}" class="search-form">
+		<div class="input-group mb-3">
+			<input type="text" class="form-control" placeholder="Search Files..." name="q" />
+			<button class="btn btn-outline-secondary" type="submit">Search</button>
+		</div>
+	</form>
+
+	<div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="uploadFileModalLabel">Upload File</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form
+						method="post"
+						action="{% url 'upload_file_in_folder' folder.slug %}"
+						enctype="multipart/form-data"
+						class="dropzone dz"
+						id="my-dropzone upload-form"
+					>
+						{% csrf_token %} {{ form.name | as_crispy_field }}
+						<div class="upload-area">
+							<div class="fallback">{{ form.file | as_crispy_field }}</div>
+							<div class="dropzone-message">
+								<i class="fas fa-cloud-upload-alt"></i>
+								<span>Drag and drop a file here. </span>
+							</div>
+						</div>
+						<button type="submit" class="btn btn-primary" id="uploadButton">Upload</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card mb-4">
+		<div class="card-body">
+			<h5 class="card-title">{{ folder.name }} Files <i class="bi bi-files"></i></h5>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>File Name</th>
+						<th>Date Uploaded</th>
+						<th>File Size</th>
+						<th>Encrypted</th>
+						<th>Decrypted</th>
+						<th>Delete</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for file in files %}
+					<tr>
+						<td><i class="bi bi-file-earmark"></i> {{ file.name }}</td>
+						<td>{{ file.created_at }}</td>
+						<td>{{ file.file_size|filesizeformat }}</td>
+						<td>
+							<a href="{{ file.file.url }}" class="btn btn-dark"> <i class="bi bi-lock"></i> </a>
+						</td>
+						<td>
+							<a href="{% url 'decrypt_file_view' file.slug %}" class="btn btn-success">
+								<i class="bi bi-download"></i>
+							</a>
+						</td>
+                        
+                        
+                <td>
+                    <form
+                        method="post"
+                        action="{% url 'file_delete_view' file.slug %}"
+                        class="delete-file-form"
+                        data-file-id="{{ file.id }}"
+                    >
+                        {% csrf_token %}
+                        <span>
+                            <button type="submit" class="btn btn-danger delete-button" data-file-id="{{ file.id }}">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </span>
+                    </form>
+                </td>
+                    
+                    
+					</tr>
+					{% empty %}
+					<tr>
+						<td colspan="3">No files found.</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+    
+{% endblock content %} 
+{% block extrascript %}
+    
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		const deleteButtons = document.querySelectorAll(".delete-button");
+
+		deleteButtons.forEach(function (deleteButton) {
+			deleteButton.addEventListener("click", function (event) {
+				const fileId = this.getAttribute("data-file-id");
+				const confirmation = confirm(
+					"Warning: Download the decrypted file before deleting. Once deleted, you can't recover or decrypt it."
+				);
+
+				if (confirmation) {
+					const associatedForm = document.querySelector(`.delete-file-form[data-file-id="${fileId}"]`);
+
+					if (associatedForm) {
+						console.log("Form found. File ID:", fileId);
+						associatedForm.submit();
+					} else {
+						console.log("Associated form not found.");
+					}
+				} else {
+					console.log("Deletion cancelled.");
+					location.reload();
+				}
+
+				event.preventDefault();
+			});
+		});
+	});
+</script>
+    
+{% endblock extrascript %}
